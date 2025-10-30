@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>♥ NawStar ♥</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        body {
+            font-family: 'Fredoka One', cursive;
+            background: linear-gradient(135deg, #ffd6e8 0%, #e6d5f5 50%, #ffc9e5 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Floating background hearts */
+        .bg-heart {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0.15;
+            animation: float 15s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(10deg); }
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #ff6ba8;
+            font-size: 3em;
+            text-shadow: 3px 3px 0px #fff, 5px 5px 0px #ffb3d9;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .score-board {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(255, 107, 168, 0.3);
+            border: 3px solid #ffb3d9;
+        }
+
+        .score {
+            font-size: 1.5em;
+            color: #ff6ba8;
+        }
+
+        .progress-bar {
+            background: #ffe6f2;
+            height: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+            border: 2px solid #ffb3d9;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #ff6ba8 0%, #ffb3d9 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 8px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 107, 168, 0.4);
+            border: 4px solid #fff;
+            margin: 0 auto;
+            max-width: 400px;
+        }
+
+        .block {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .block:active {
+            transform: scale(0.95);
+        }
+
+        .block.selected {
+            animation: wiggle 0.3s ease;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg) scale(1.1); }
+            25% { transform: rotate(-5deg) scale(1.1); }
+            75% { transform: rotate(5deg) scale(1.1); }
+        }
+
+        /* Color themes - pastel and cute */
+        .color-0 { background: linear-gradient(135deg, #ffb3d9 0%, #ff99cc 100%); } /* Pink */
+        .color-1 { background: linear-gradient(135deg, #c9b3ff 0%, #b399ff 100%); } /* Lavender */
+        .color-2 { background: linear-gradient(135deg, #ffe6cc 0%, #ffd699 100%); } /* Peach */
+        .color-3 { background: linear-gradient(135deg, #ccf2ff 0%, #99e6ff 100%); } /* Sky */
+        .color-4 { background: linear-gradient(135deg, #ffffcc 0%, #ffff99 100%); } /* Yellow */
+
+        /* Pop animation */
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .popping {
+            animation: pop 0.4s ease forwards;
+        }
+
+        /* Floating particles */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            font-size: 24px;
+            animation: float-up 2s ease forwards;
+            z-index: 1000;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+        }
+
+        /* Victory screen */
+        .victory-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 182, 217, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .victory-screen.show {
+            display: flex;
+        }
+
+        .victory-message {
+            font-size: 2em;
+            color: #fff;
+            text-shadow: 3px 3px 0px #ff6ba8, 5px 5px 10px rgba(255, 107, 168, 0.5);
+            margin: 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .final-score {
+            font-size: 3em;
+            color: #fff;
+            text-shadow: 2px 2px 0px #ff6ba8;
+            margin: 20px;
+        }
+
+        .star-burst {
+            font-size: 4em;
+            animation: spin 3s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #ff6ba8 0%, #ffb3d9 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Fredoka One', cursive;
+            box-shadow: 0 5px 15px rgba(255, 107, 168, 0.4);
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2.5em;
+            }
+            
+            .game-board {
+                gap: 3px;
+                padding: 8px;
+            }
+            
+            .block {
+                border: 2px solid rgba(255, 255, 255, 0.8);
+                font-size: 1em;
+            }
+
+            .victory-message {
+                font-size: 1.5em;
+            }
+        }
+
+        /* Combo display */
+        .combo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            color: #fff;
+            text-shadow: 3px 3px 0px #ff6ba8;
+            pointer-events: none;
+            animation: comboAnim 1s ease forwards;
+            z-index: 1500;
+        }
+
+        @keyframes comboAnim {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background floating hearts -->
+    <div class="bg-heart" style="top: 10%; left: 10%;">💖</div>
+    <div class="bg-heart" style="top: 20%; right: 15%; animation-delay: 2s;">✨</div>
+    <div class="bg-heart" style="bottom: 15%; left: 20%; animation-delay: 4s;">💖</div>
+    <div class="bg-heart" style="bottom: 25%; right: 10%; animation-delay: 6s;">✨</div>
+    <div class="bg-heart" style="top: 50%; left: 5%; animation-delay: 3s;">💕</div>
+    <div class="bg-heart" style="top: 60%; right: 8%; animation-delay: 5s;">⭐</div>
+
+    <div class="container">
+        <h1>♥ NawStar ♥</h1>
+        
+        <div class="score-board">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </div>
+
+        <div class="game-board" id="gameBoard"></div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div class="victory-screen" id="victoryScreen">
+        <div class="star-burst">🌟</div>
+        <div class="victory-message">You shine like a star, Naw 🌟💖</div>
+        <div class="final-score">Score: <span id="finalScore">0</span></div>
+        <button class="restart-btn" onclick="location.reload()">Play Again ♥</button>
+    </div>
+
+    <script>
+        // Game configuration
+        const GRID_SIZE = 8;
+        const NUM_COLORS = 5;
+        const MAX_SCORE = 1000;
+        
+        let grid = [];
+        let score = 0;
+        let selectedBlocks = [];
+
+        // Initialize the game
+        function initGame() {
+            grid = [];
+            score = 0;
+            updateScore();
+            
+            // Create initial grid
+            for (let row = 0; row < GRID_SIZE; row++) {
+                grid[row] = [];
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    grid[row][col] = Math.floor(Math.random() * NUM_COLORS);
+                }
+            }
+            
+            renderGrid();
+        }
+
+        // Render the game board
+        function renderGrid() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    if (grid[row][col] !== -1) {
+                        const block = document.createElement('div');
+                        block.className = `block color-${grid[row][col]}`;
+                        block.dataset.row = row;
+                        block.dataset.col = col;
+                        
+                        // Add cute emoji based on color
+                        const emojis = ['💖', '💜', '🧡', '💙', '💛'];
+                        block.innerHTML = emojis[grid[row][col]];
+                        
+                        block.addEventListener('click', () => handleBlockClick(row, col));
+                        gameBoard.appendChild(block);
+                    } else {
+                        // Empty space
+                        gameBoard.appendChild(document.createElement('div'));
+                    }
+                }
+            }
+        }
+
+        // Handle block click
+        function handleBlockClick(row, col) {
+            const color = grid[row][col];
+            if (color === -1) return;
+            
+            selectedBlocks = [];
+            findConnectedBlocks(row, col, color);
+            
+            // Need at least 2 blocks to pop
+            if (selectedBlocks.length >= 2) {
+                popBlocks();
+            }
+        }
+
+        // Find all connected blocks of same color
+        function findConnectedBlocks(row, col, color) {
+            if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) return;
+            if (grid[row][col] !== color) return;
+            if (selectedBlocks.some(b => b.row === row && b.col === col)) return;
+            
+            selectedBlocks.push({ row, col });
+            
+            // Check all 4 directions
+            findConnectedBlocks(row - 1, col, color);
+            findConnectedBlocks(row + 1, col, color);
+            findConnectedBlocks(row, col - 1, color);
+            findConnectedBlocks(row, col + 1, color);
+        }
+
+        // Pop selected blocks with animation
+        function popBlocks() {
+            const count = selectedBlocks.length;
+            const points = count * count * 10;
+            
+            // Add score
+            score += points;
+            updateScore();
+            
+            // Show combo if large group
+            if (count >= 5) {
+                showCombo(count);
+            }
+            
+            // Animate and remove blocks
+            selectedBlocks.forEach(({ row, col }) => {
+                const block = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (block) {
+                    block.classList.add('popping');
+                    createParticles(block);
+                }
+                grid[row][col] = -1;
+            });
+            
+            // Wait for animation then update grid
+            setTimeout(() => {
+                applyGravity();
+                renderGrid();
+                checkGameOver();
+            }, 400);
+        }
+
+        // Create floating particle effects
+        function createParticles(element) {
+            const rect = element.getBoundingClientRect();
+            const particles = ['✨', '💖', '⭐', '💕'];
+            
+            for (let i = 0; i < 3; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = particles[Math.floor(Math.random() * particles.length)];
+                particle.style.left = rect.left + rect.width / 2 + 'px';
+                particle.style.top = rect.top + rect.height / 2 + 'px';
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 2000);
+            }
+        }
+
+        // Show combo message
+        function showCombo(count) {
+            const combo = document.createElement('div');
+            combo.className = 'combo';
+            combo.textContent = `${count} COMBO! ✨`;
+            document.body.appendChild(combo);
+            
+            setTimeout(() => combo.remove(), 1000);
+        }
+
+        // Apply gravity - blocks fall down
+        function applyGravity() {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                // Collect non-empty blocks in this column
+                let blocks = [];
+                for (let row = GRID_SIZE - 1; row >= 0; row--) {
+                    if (grid[row][col] !== -1) {
+                        blocks.push(grid[row][col]);
+                    }
+                }
+                
+                // Rebuild column from bottom
+                for (let row = GRID_SIZE - 1; row >= 0; row--) {
+                    if (blocks.length > 0) {
+                        grid[row][col] = blocks.shift();
+                    } else {
+                        grid[row][col] = -1;
+                    }
+                }
+            }
+            
+            // Shift columns left to fill gaps
+            let writeCol = 0;
+            for (let col = 0; col < GRID_SIZE; col++) {
+                let hasBlocks = false;
+                for (let row = 0; row < GRID_SIZE; row++) {
+                    if (grid[row][col] !== -1) {
+                        hasBlocks = true;
+                        break;
+                    }
+                }
+                
+                if (hasBlocks) {
+                    if (writeCol !== col) {
+                        for (let row = 0; row < GRID_SIZE; row++) {
+                            grid[row][writeCol] = grid[row][col];
+                        }
+                    }
+                    writeCol++;
+                }
+            }
+            
+            // Clear remaining columns
+            for (let col = writeCol; col < GRID_SIZE; col++) {
+                for (let row = 0; row < GRID_SIZE; row++) {
+                    grid[row][col] = -1;
+                }
+            }
+        }
+
+        // Update score display
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            const progress = Math.min((score / MAX_SCORE) * 100, 100);
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        // Check if game is over
+        function checkGameOver() {
+            // Check if any moves are possible
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    if (grid[row][col] === -1) continue;
+                    
+                    const color = grid[row][col];
+                    // Check adjacent cells
+                    if ((row > 0 && grid[row - 1][col] === color) ||
+                        (row < GRID_SIZE - 1 && grid[row + 1][col] === color) ||
+                        (col > 0 && grid[row][col - 1] === color) ||
+                        (col < GRID_SIZE - 1 && grid[row][col + 1] === color)) {
+                        return; // Move available
+                    }
+                }
+            }
+            
+            // No moves available - show victory screen
+            showVictory();
+        }
+
+        // Show victory screen
+        function showVictory() {
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('victoryScreen').classList.add('show');
+        }
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
